@@ -1,0 +1,28 @@
+# Netlify: the app is static; the Smart service is a Netlify Function.
+# Set ANTHROPIC_API_KEY (and optionally SMART_ACCESS_CODE, SMART_ALLOWED_ORIGINS, SMART_MODELS, SMART_RATE_LIMIT)
+# under Site configuration → Environment variables. Never put the key in this file or in the app.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# The server code is not part of the public site
+[[redirects]]
+  from = "/server/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

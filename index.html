@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Case Generator</title>
+    <script>
+        // Apply the saved theme before the first paint (no flash)
+        try { const t = localStorage.getItem("tcg-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) { }
+        try { if (localStorage.getItem("tcg-sidebar") === "collapsed") document.documentElement.classList.add("nav-collapsed"); } catch (e) { }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="app">
+        <!-- ================= Sidebar navigation ================= -->
+        <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="sidebar-brand">
+                <span class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 11l2.2 2.2L15.5 9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </span>
+                <span class="brand-name">Test Case<br>Generator</span>
+                <button class="icon-btn nav-collapse" id="navCollapse" title="Collapse sidebar" aria-label="Collapse sidebar" aria-expanded="true">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+
+            <button class="btn btn-primary nav-new" id="newBtn" title="Start a new suite or clear the test cases">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                <span class="nav-label">New suite</span>
+            </button>
+
+            <nav class="nav" aria-label="Pages">
+                <p class="nav-group">Create</p>
+                <button class="nav-item" data-tab="setup" title="Create">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" fill="currentColor"/></svg>
+                    <span class="nav-label">Create</span>
+                </button>
+
+                <p class="nav-group">Test suite</p>
+                <button class="nav-item" data-tab="cases" title="Test cases">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    <span class="nav-label">Test cases</span>
+                    <span class="count" id="caseCount">0</span>
+                </button>
+                <button class="nav-item" data-tab="workbook" title="Spreadsheet">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M3.5 14.5h17M9 4.5v15" stroke="currentColor" stroke-width="1.6"/></svg>
+                    <span class="nav-label">Spreadsheet</span>
+                </button>
+                <button class="nav-item" data-tab="dashboard" title="Dashboard">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    <span class="nav-label">Dashboard</span>
+                </button>
+                <button class="nav-item" data-tab="data" title="Test data">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><ellipse cx="12" cy="6" rx="7.5" ry="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+                    <span class="nav-label">Test data</span>
+                    <span class="count" id="dataCount">0</span>
+                </button>
+
+                <p class="nav-group">Team</p>
+                <button class="nav-item" data-tab="rules" title="Format & rules">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 3.5h9l4 4V20a.5.5 0 01-.5.5h-12A.5.5 0 016 20z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.5 11h6M9.5 14.5h6M9.5 18h3.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    <span class="nav-label">Format &amp; rules</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-foot">
+                <button class="nav-item" id="historyBtn" title="History — saved suites and versions">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8M3 3v5h5M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="nav-label">History</span>
+                </button>
+                <div class="theme-switch" role="radiogroup" aria-label="Colour theme" id="themeSwitch">
+                    <button role="radio" data-theme-choice="system" title="Match the system theme" aria-label="System theme">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><rect x="3.5" y="4.5" width="17" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9 20h6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <button role="radio" data-theme-choice="light" title="Light theme" aria-label="Light theme">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <button role="radio" data-theme-choice="dark" title="Dark theme" aria-label="Dark theme">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        <div class="scrim" id="scrim" hidden></div>
+
+        <!-- ================= Main column ================= -->
+        <div class="main">
+            <header class="topbar">
+                <button class="icon-btn nav-toggle" id="navToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+                <div class="project">
+                    <span class="project-kicker">Project</span>
+                    <span class="project-line">
+                        <strong id="projectLabel">Untitled project</strong>
+                        <span class="saved-label" id="savedLabel"></span>
+                    </span>
+                </div>
+
+                <button class="status-chip" id="checkBtn" title="Check against Standard v3">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span class="status-text">Standard check</span>
+                    <span class="count" id="issueCount">0</span>
+                </button>
+
+                <div class="top-actions">
+                    <button class="icon-btn" id="undoBtn" disabled title="Undo the last change" aria-label="Undo">
+                        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 010 10h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="menu">
+                        <button class="icon-btn" id="fileBtn" aria-haspopup="true" aria-expanded="false" title="Import, open and save" aria-label="More actions">
+                            <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>
+                        </button>
+                        <div class="menu-list" id="fileMenu" hidden>
+                            <p class="menu-label">Add &amp; import</p>
+                            <button data-file="upload">Upload release notes, screens or documents…</button>
+                            <button data-file="import">Import test case workbook (.xlsx)…</button>
+                            <button data-file="open">Open project (.json)…</button>
+                            <hr>
+                            <p class="menu-label">Save</p>
+                            <button data-file="save">Save project (.json)</button>
+                            <hr>
+                            <p class="menu-label">Examples</p>
+                            <button data-file="reference">Open reference suite — Clock In / Out Revamp</button>
+                            <button data-file="sample">Load sample — Pending Punch Ack</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="exportBtn">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="lbl">Export Excel</span>
+                    </button>
+                    <button class="btn btn-assistant" id="assistantBtn" aria-pressed="false" aria-controls="assistant">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" fill="currentColor"/></svg>
+                        <span class="lbl">Assistant</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="content" id="main" tabindex="-1">
+
+            <!-- ================= Create ================= -->
+            <section class="tab-panel" id="tab-setup" hidden>
+                <header class="page-head">
+                    <div class="page-title">
+                        <span class="eyebrow">Standard v3 workbook</span>
+                        <h1>Create test cases from what changed</h1>
+                        <p>Drop release notes, specs, screenshots or recordings. Modules, scope, change areas, reports, regression and edge cases are worked out for you, following your <a href="#" data-goto="rules">format &amp; rules</a>.</p>
+                    </div>
+                    <ol class="flow" id="flowSteps" aria-label="Progress">
+                        <li data-flow="add"><i></i><span>Add what changed</span></li>
+                        <li data-flow="generate"><i></i><span>Generate</span></li>
+                        <li data-flow="review"><i></i><span>Review &amp; export</span></li>
+                    </ol>
+                </header>
+
+                <div class="setup-flow">
+                        <!-- Step 1: what changed -->
+                        <section class="card panel" id="s-basis" aria-labelledby="h-basis">
+                            <div class="panel-head">
+                                <span class="step-no" aria-hidden="true">1</span>
+                                <div>
+                                    <h2 id="h-basis">What changed</h2>
+                                    <p>Any mix of files works — the more detail, the better the cases.</p>
+                                </div>
+                                <span class="badge" id="basisStats"></span>
+                            </div>
+                            <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Upload release notes, specs, slides, screens or recordings">
+                                <span class="drop-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 16V4m0 0l-4 4m4-4l4 4M5 16v3h14v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </span>
+                                <span class="drop-text"><strong>Drop files here or click to upload</strong>
+                                    <small>You can also paste screenshots with Ctrl+V</small></span>
+                                <span class="file-types" aria-hidden="true">
+                                    <b>PDF</b><b>Word</b><b>PowerPoint</b><b>Excel</b><b>Email</b><b>Screenshots</b><b>Recordings</b><b>ZIP</b>
+                                </span>
+                            </div>
+                            <div class="sources-panel" id="sourcesPanel" hidden>
+                                <div class="sources-head">
+                                    <span class="badge" id="sourceSummary">No files yet</span>
+                                    <button type="button" class="link-btn" id="clearSourcesBtn" hidden>Remove all</button>
+                                </div>
+                                <div class="source-list" id="sourceList"></div>
+                            </div>
+                            <input type="file" id="sourceInput" multiple hidden>
+                            <label class="field basis-field">
+                                <span>Details <small>optional — flows, exact labels and messages, open questions</small></span>
+                                <textarea data-bind="basisText" rows="4" class="basis-text" placeholder="e.g. Clock-out now asks for tips. 1. Tap Clock Out. 2. Enter Cash and Credit tips. 3. Tap Submit — &quot;Shift closed&quot; shows."></textarea>
+                            </label>
+                        </section>
+
+
+                        <!-- Step 2: generate -->
+                        <section class="card panel generate-panel" id="s-project" aria-labelledby="h-generate">
+                            <div class="panel-head">
+                                <span class="step-no" aria-hidden="true">2</span>
+                                <div>
+                                    <h2 id="h-generate">Generate</h2>
+                                    <p>Choose how your files are read, then generate.</p>
+                                </div>
+                            </div>
+                            <div class="engine-cards" role="radiogroup" aria-label="How to read the files" id="engineGroup">
+                                <label class="engine-card">
+                                    <input type="radio" name="engine" value="offline">
+                                    <span class="engine-icon offline" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><rect x="4" y="5" width="16" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 20h6M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+                                    <span class="engine-text"><strong>Offline <em>default</em></strong><small>Runs in this browser, no key. Reads the text of your files and your notes on recordings.</small></span>
+                                </label>
+                                <label class="engine-card">
+                                    <input type="radio" name="engine" value="smart">
+                                    <span class="engine-icon smart" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" fill="currentColor"/></svg></span>
+                                    <span class="engine-text"><strong>Smart</strong><small>Also reads screenshots and recordings. Proposes cases you review before they are added. Needs the Smart service.</small></span>
+                                </label>
+                            </div>
+                            <p class="hint engine-note" id="engineNote" hidden></p>
+                            <div class="generate-row">
+                                <p id="generateHint" class="gen-hint" role="status"></p>
+                                <button class="btn btn-primary btn-generate" id="generateBtn">
+                                    <svg viewBox="0 0 24 24" width="17" height="17"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" fill="currentColor"/></svg>
+                                    Generate test cases
+                                </button>
+                            </div>
+                            <div id="youGet"></div>
+                            <details class="workbook-details" id="workbookDetails">
+                                <summary>
+                                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    Workbook details <small>project name, prefix, file name, tester and date — filled in from your files</small>
+                                </summary>
+                            <div class="form-grid">
+                                <label class="field span-2"><span>Project name</span>
+                                    <input data-bind="project.name" placeholder="Filled in from your files"></label>
+                                <label class="field"><span>Prefix</span>
+                                    <input data-bind="project.code" placeholder="Auto" maxlength="6" class="mono upper"></label>
+                                <label class="field"><span>File name</span>
+                                    <input data-bind="project.fileName" placeholder="Auto" class="mono"></label>
+                                <label class="field"><span>Test environment</span>
+                                    <input data-bind="project.environment"></label>
+                                <label class="field"><span>Tested by</span>
+                                    <input data-bind="project.testedBy"></label>
+                                <label class="field"><span>Execution date</span>
+                                    <input type="date" data-bind="project.executionDate"></label>
+                                <label class="field"><span>Status for this cycle</span>
+                                    <select data-bind="project.defaultStatus">
+                                        <option value="Pass">Pass — once execution evidence is recorded</option>
+                                        <option value="Untested">Untested — not run yet</option>
+                                    </select></label>
+                                <label class="field span-2"><span>Execution evidence <small>build, tester and date, or a link to the run — required for any Pass</small></span>
+                                    <input data-bind="project.evidence" placeholder="e.g. QA build 4.2.1 · run by Emma Clarke · 23/10/2026"></label>
+                            </div>
+                            <p class="hint">Site, time zone and the other environment rows are on the Test data page.</p>
+                            </details>
+                        </section>
+
+                        <!-- Step 3: review what was found -->
+                        <section class="card panel" id="s-review" aria-labelledby="h-review" hidden>
+                            <div class="panel-head">
+                                <span class="step-no" aria-hidden="true">3</span>
+                                <div>
+                                    <h2 id="h-review">Review &amp; export</h2>
+                                    <p>What was found in your files. Edit the cases, then export.</p>
+                                </div>
+                                <div class="review-actions">
+                                    <button class="btn btn-sm" data-goto-tab="cases">Review cases</button>
+                                    <button class="btn btn-primary btn-sm" data-export>Export Excel</button>
+                                </div>
+                            </div>
+                            <div class="detected" id="detected"></div>
+                        </section>
+                </div>
+            </section>
+            <!-- ================= Test cases ================= -->
+            <section class="tab-panel" id="tab-cases" hidden>
+                <header class="page-head compact">
+                    <div class="page-title">
+                        <h1>Test cases</h1>
+                        <p>Edit any text in place. Status and importance update the dashboard as you go.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-ghost btn-sm" id="collapseBtn">Collapse all</button>
+                        <button class="btn btn-ghost btn-sm" id="renumberBtn">Renumber IDs</button>
+                    </div>
+                </header>
+                <div class="toolbar" role="search">
+                    <label class="search">
+                        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        <input type="search" id="caseSearch" placeholder="Search cases, steps, IDs…" aria-label="Search test cases">
+                    </label>
+                    <div class="filters">
+                        <select id="fSection" aria-label="Filter by module"></select>
+                        <select id="fImportance" aria-label="Filter by importance">
+                            <option value="">All importance</option><option>High</option><option>Medium</option><option>Low</option>
+                        </select>
+                        <select id="fStatus" aria-label="Filter by status">
+                            <option value="">All statuses</option><option>Untested</option><option>Pass</option><option>Fail</option><option>Blocked</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="suite"></div>
+            </section>
+
+            <!-- ================= Spreadsheet (Excel view of the export) ================= -->
+            <section class="tab-panel" id="tab-workbook" hidden>
+                <header class="page-head compact">
+                    <div class="page-title">
+                        <h1>Spreadsheet</h1>
+                        <p>Exactly what the exported .xlsx contains — edit cells directly.</p>
+                    </div>
+                </header>
+                <div class="xl">
+                    <div class="xl-titlebar">
+                        <span class="xl-logo" aria-hidden="true">X</span>
+                        <span class="xl-file" id="xlFileName">Test_Cases.xlsx</span>
+                        <span class="xl-sub">Preview of the exported workbook</span>
+                        <span class="spacer"></span>
+                        <button type="button" class="xl-check" id="xlCheck">Check</button>
+                        <button type="button" class="btn btn-sm xl-download" id="xlExport">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Download .xlsx
+                        </button>
+                    </div>
+                    <div class="xl-formula-bar">
+                        <span class="xl-namebox" id="xlNameBox">A1</span>
+                        <span class="xl-fx">fx</span>
+                        <div class="xl-formula" id="xlFormula"></div>
+                    </div>
+                    <div class="xl-grid" id="xlGrid"></div>
+                    <div class="xl-empty-state" id="xlEmpty" hidden>
+                        <p><strong>No test cases yet.</strong> Add what changed on Create, then select Generate test cases.</p>
+                        <button class="btn btn-primary" data-go="setup">Go to Create</button>
+                    </div>
+                    <div class="xl-tabs" role="tablist" aria-label="Sheets">
+                        <button data-sheet="dashboard">Dashboard</button>
+                        <button data-sheet="cases" class="active">Sheet1</button>
+                        <button data-sheet="data">Test Data</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= Dashboard ================= -->
+            <section class="tab-panel" id="tab-dashboard" hidden>
+                <header class="page-head compact">
+                    <div class="page-title">
+                        <h1>Dashboard</h1>
+                        <p>Execution status across the suite — the same numbers as the Dashboard sheet.</p>
+                    </div>
+                </header>
+                <div class="kpis" id="kpis"></div>
+                <div class="dash-grid">
+                    <section class="card chart-card" aria-labelledby="h-status">
+                        <div class="card-head"><h2 id="h-status">Execution status</h2></div>
+                        <div id="donut"></div>
+                    </section>
+                    <section class="card" aria-labelledby="h-details">
+                        <div class="card-head"><h2 id="h-details">Project details</h2><p>Shown at the top of the Dashboard sheet.</p></div>
+                        <div class="grid-2">
+                            <label class="field span-2"><span>Project name</span><input data-bind="project.name"></label>
+                            <label class="field"><span>Test environment</span><input data-bind="project.environment"></label>
+                            <label class="field"><span>Tested by</span><input data-bind="project.testedBy"></label>
+                            <label class="field"><span>Execution date</span><input type="date" data-bind="project.executionDate"></label>
+                            <label class="field span-2"><span>Execution evidence <small>required for any Pass</small></span><input data-bind="project.evidence" placeholder="e.g. QA build 4.2.1 · run by Emma Clarke · 23/10/2026"></label>
+                        </div>
+                    </section>
+                </div>
+                <section class="card" aria-labelledby="h-modules">
+                    <div class="card-head"><h2 id="h-modules">Modules</h2></div>
+                    <div class="table-scroll"><table class="mod-table" id="moduleTable"></table></div>
+                </section>
+            </section>
+
+            <!-- ================= Test data ================= -->
+            <section class="tab-panel" id="tab-data" hidden>
+                <header class="page-head compact">
+                    <div class="page-title">
+                        <h1>Test data</h1>
+                        <p>Reference an item in a case with <code>{Data Item}</code>. "Used by" fills in automatically; unused rows are left out of the export.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn btn-primary btn-sm" id="addDataBtn">
+                            <svg viewBox="0 0 24 24" width="15" height="15"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                            Add item
+                        </button>
+                    </div>
+                </header>
+                <section class="card flush">
+                    <div class="table-scroll"><table class="data-table" id="dataTable"></table></div>
+                </section>
+            </section>
+
+            <!-- ================= Format & rules ================= -->
+            <section class="tab-panel" id="tab-rules" hidden>
+                <header class="page-head compact">
+                    <div class="page-title">
+                        <h1>Format &amp; rules</h1>
+                        <p>Your team's format and rules. Both engines follow them for every suite; save your changes, then share them as a rules pack so every suite reads the same.</p>
+                    </div>
+                    <div class="page-actions">
+                        <span class="save-state" id="rulesSaveState" role="status"></span>
+                        <button class="btn btn-sm" id="rulesImport" title="Use a rules pack a teammate shared">Import pack</button>
+                        <button class="btn btn-sm" id="rulesExport" title="A .json file with your format, team rules and style examples">Export pack</button>
+                        <button class="btn btn-primary btn-sm" id="rulesSave" title="Save the format and rules (Ctrl+S)">
+                            <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 4v5h7V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                            Save
+                        </button>
+                    </div>
+                </header>
+
+                <section class="card rules-format" aria-labelledby="h-format">
+                    <div class="card-head row">
+                        <div>
+                            <h2 id="h-format">Team format</h2>
+                            <p>The workbook format, coverage, wording and data rules. Built into the generator and the export; Smart also reads this text with every request. Where it disagrees with the Altametrics standard, this wins.</p>
+                        </div>
+                        <div class="row-actions">
+                            <button class="btn btn-ghost btn-sm" id="formatReset" title="Go back to the team format the app shipped with">Reset to default</button>
+                        </div>
+                    </div>
+                    <div class="format-glance">
+                        <div><strong>Sheets</strong><span>Dashboard · Sheet1 · Test Data</span></div>
+                        <div><strong>IDs</strong><span><code>PREFIX_CR_MOD_NNN</code> change-scoped · <code>PREFIX_MOD_NNN</code> full module</span></div>
+                        <div><strong>Modules</strong><span>Functional, then UI, API, DB, INT, RPT, REG, EDG</span></div>
+                        <div><strong>Status</strong><span>Defaults to Pass; Actual Result mirrors the Expected Result</span></div>
+                        <div><strong>Test Data</strong><span>Environment and build, Platform, QA URL, Tenant or site, Time zone, Business day start — then synthetic data</span></div>
+                        <div><strong>Intake</strong><span>Change areas, surfaces, design material and scope are confirmed before every generate</span></div>
+                    </div>
+                    <textarea id="teamFormat" rows="18" class="format-text" aria-labelledby="h-format" spellcheck="false"></textarea>
+                    <details class="standard-full">
+                        <summary>Altametrics standard (the base the team format refines)</summary>
+                        <pre id="standardText"></pre>
+                    </details>
+                </section>
+
+                <div class="rules-grid">
+                    <section class="card rules-team" aria-labelledby="h-team">
+                        <div class="card-head">
+                            <h2 id="h-team">Team rules &amp; generation ideas</h2>
+                            <p>Extra rules on top of the format. Both engines use them — the list below shows what Offline applies. <span class="muted" id="rulesSaved"></span></p>
+                        </div>
+                        <textarea id="teamRules" rows="9" aria-labelledby="h-team" placeholder="One rule or idea per line, e.g.
+- Use &quot;Manager web&quot;, never &quot;back office&quot;.
+- EDG cases are Low
+- Every precondition must include &quot;The QA build is installed&quot;
+REG: Verify the employee list still opens. [High]
+- Open the Time Clock home => The employee list should be displayed."></textarea>
+                        <div class="rules-preview" id="rulesPreview" aria-live="polite"></div>
+                        <div class="share-actions">
+                            <button class="btn btn-sm" id="rulesGuide" title="A readable guide (.md) with the format, team rules and examples">Download guide (.md)</button>
+                            <button class="btn btn-ghost btn-sm" id="rulesCopy">Copy guide</button>
+                        </div>
+                    </section>
+
+                    <section class="card rules-examples" aria-labelledby="h-examples">
+                        <div class="card-head row">
+                            <div>
+                                <h2 id="h-examples">Style examples</h2>
+                                <p>Reviewed cases Smart copies for detail and wording. <span class="muted" id="examplesFrom"></span></p>
+                            </div>
+                            <div class="row-actions">
+                                <button class="btn btn-ghost btn-sm" id="examplesReset" hidden>Use built-in</button>
+                                <button class="btn btn-sm" id="examplesUpload" title="Pick a reviewed .xlsx in the team format">Use a reviewed workbook…</button>
+                            </div>
+                        </div>
+                        <div class="examples-list" id="examplesList"></div>
+                    </section>
+                </div>
+                <p class="hint rules-note">Changes are kept in this browser once saved. The rules pack is a small file — post it in the team channel; importing one replaces the format, team rules and style examples here.</p>
+                <input type="file" id="rulesInput" accept=".json,application/json" hidden>
+                <input type="file" id="examplesInput" accept=".xlsx" hidden>
+            </section>
+            </main>
+        </div>
+
+        <!-- ================= Assistant ================= -->
+        <aside class="assistant" id="assistant" aria-label="Assistant">
+            <header class="assistant-head">
+                <div>
+                    <h2>Assistant</h2>
+                    <span id="chatModeNote"></span>
+                </div>
+                <div class="assistant-tools">
+                    <button class="icon-btn" id="chatKeyBtn" title="Smart settings" aria-label="Smart settings">
+                        <svg viewBox="0 0 24 24" width="17" height="17"><circle cx="8" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 12l8-8m-3 3l2 2m-4 0l1.5 1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                    <button class="icon-btn" id="chatClear" title="Clear conversation" aria-label="Clear conversation">
+                        <svg viewBox="0 0 24 24" width="17" height="17"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button class="icon-btn" id="assistantClose" title="Close" aria-label="Close assistant">
+                        <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="mode-switch" role="group" aria-label="Assistant mode">
+                <button data-chat-mode="cmd">Commands</button>
+                <button data-chat-mode="ai">Smart</button>
+            </div>
+            <label class="check sources-toggle" id="sourcesToggle" hidden>
+                <input type="checkbox" id="useSources"> Send uploaded sources with smart chat (<span id="sourcesCount">0</span>)
+            </label>
+
+            <div class="chat-settings" id="chatSettings" hidden>
+                <h3 class="settings-title">Smart settings</h3>
+                <label class="field"><span>Service address <small>the server-side Smart service</small></span>
+                    <input id="smartEndpoint" placeholder="/.netlify/functions/smart" autocomplete="off" spellcheck="false"></label>
+                <div class="settings-grid">
+                    <label class="field"><span>Provider</span><select id="smartProvider"></select></label>
+                    <label class="field"><span>Model</span><select id="smartModel"></select></label>
+                </div>
+                <label class="field" id="smartAccessRow" hidden><span>Team access code <small>kept for this tab only</small></span>
+                    <input type="password" id="smartAccess" autocomplete="off"></label>
+                <p class="smart-status idle" id="smartStatus" role="status"></p>
+                <p class="hint">The provider key is stored on the server, never in this browser. Smart sends only the cases in the scope you choose, your format and rules, and the files a command needs — with real e-mail addresses and secrets removed. Every change is shown for approval first.</p>
+                <div class="row-actions">
+                    <button class="btn btn-sm" id="smartTest">Test connection</button>
+                    <span class="spacer"></span>
+                    <button class="btn btn-ghost btn-sm" id="chatSettingsClose">Close</button>
+                    <button class="btn btn-primary btn-sm" id="smartSave">Save</button>
+                </div>
+            </div>
+
+            <div class="smart-tools" id="smartTools" hidden>
+                <div class="smart-target" role="radiogroup" aria-label="What Smart works on">
+                    <label><input type="radio" name="smartTarget" value="selected"> Selected <b id="smartSelectedCount">0</b></label>
+                    <label><input type="radio" name="smartTarget" value="module"> Module <select id="smartModule" aria-label="Module"></select></label>
+                    <label><input type="radio" name="smartTarget" value="suite" checked> Whole suite</label>
+                </div>
+                <div class="smart-shortcuts" id="smartShortcuts"></div>
+                <div class="smart-foot"><span class="smart-conn" id="smartConn"></span><span class="spacer"></span><button type="button" class="link-btn" id="smartHistoryBtn">Change history</button></div>
+            </div>
+            <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+
+            <form class="composer" id="chatForm">
+                <textarea id="chatInput" rows="1" aria-label="Message"></textarea>
+                <button class="send" id="chatSend" aria-label="Send">
+                    <svg class="i-send" viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg class="i-stop" viewBox="0 0 24 24" width="16" height="16"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+                </button>
+            </form>
+        </aside>
+    </div>
+
+    <dialog class="dialog check-dialog" id="checkDialog" aria-labelledby="checkTitle">
+        <header>
+            <div>
+                <h2 id="checkTitle">Standard v3 check</h2>
+                <p id="checkSummary"></p>
+            </div>
+            <button class="icon-btn" id="checkClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="check-body" id="checkBody"></div>
+        <footer>
+            <button class="btn btn-ghost btn-sm" id="checkRenumber">Renumber IDs</button>
+            <span class="spacer"></span>
+            <button class="btn btn-primary btn-sm" id="checkDone">Done</button>
+        </footer>
+    </dialog>
+
+    <!-- New suite / clear -->
+    <dialog class="dialog new-dialog" id="newDialog" aria-labelledby="newTitle">
+        <header>
+            <div>
+                <h2 id="newTitle">New suite</h2>
+                <p class="new-current" id="newCurrent"></p>
+            </div>
+            <button class="icon-btn" id="newCancel" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="new-options">
+            <button type="button" class="new-option" id="newStart">
+                <span class="new-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                </span>
+                <span><strong>Start a new suite</strong><small>Clears the files, details, workbook details, test cases and Test Data. The current suite is saved in History first.</small></span>
+            </button>
+            <button type="button" class="new-option" id="newClear">
+                <span class="new-icon clear" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                </span>
+                <span><strong>Clear the test cases only</strong><small>Keeps your files and details so you can change them and generate again. Can be undone.</small></span>
+            </button>
+        </div>
+        <label class="check new-keep"><input type="checkbox" id="newKeepSources"> Keep the uploaded files when starting a new suite</label>
+    </dialog>
+
+    <!-- History -->
+    <dialog class="dialog hist-dialog" id="historyDialog" aria-labelledby="historyTitle">
+        <header>
+            <div>
+                <h2 id="historyTitle">History</h2>
+                <p>Suites are saved in this browser automatically. Open one to make changes, or restore an earlier version. <span id="historyCount"></span></p>
+            </div>
+            <button class="icon-btn" id="historyClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="hist-toolbar">
+            <label class="search">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input type="search" id="historySearch" placeholder="Search by name, prefix, file or module" aria-label="Search history">
+            </label>
+            <button type="button" class="btn btn-sm" id="historySaveVersion">Save version now</button>
+        </div>
+        <div class="hist-list" id="historyList"></div>
+    </dialog>
+
+    <!-- Screen recording viewer -->
+    <dialog class="dialog video-dialog" id="videoDialog" aria-labelledby="videoTitle">
+        <header>
+            <div>
+                <h2 id="videoTitle">Recording</h2>
+                <p id="videoMeta"></p>
+            </div>
+            <button class="icon-btn" id="videoClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="video-body">
+            <div class="video-stage">
+                <video id="videoPlayer" controls playsinline preload="metadata"></video>
+                <p class="hint" id="videoNoBlob" hidden>This recording was added with an earlier version, so only its screens were kept. Upload it again to watch it here.</p>
+                <div class="row-actions">
+                    <button class="btn btn-sm" id="videoCapture" title="Add the frame shown in the player to the screens">Capture this moment</button>
+                    <button class="btn btn-ghost btn-sm" id="videoRedetect">Find screens again</button>
+                </div>
+                <p class="hint">Select a screen to jump there. Write what the tester does and what the app shows — the notes become the steps the test cases are written from, and Smart also reads every screen.</p>
+            </div>
+            <div class="video-frames" id="videoFrames"></div>
+        </div>
+        <footer>
+            <button class="btn btn-ghost btn-sm" id="videoCopy" title="Copy the noted steps into the details to edit them there">Copy steps to details</button>
+            <span class="spacer"></span>
+            <button class="btn btn-sm" id="videoDone">Done</button>
+            <button class="btn btn-primary btn-sm" id="videoGenerate">Generate test cases</button>
+        </footer>
+    </dialog>
+
+    <!-- Intake: confirm before generating (team format) -->
+    <dialog class="dialog intake-dialog" id="intakeDialog" aria-labelledby="intakeTitle">
+        <header>
+            <div>
+                <h2 id="intakeTitle">Confirm before generating</h2>
+                <p>The team format asks for these before any case is written. They were filled in from your files — check them and add anything missing.</p>
+            </div>
+            <button class="icon-btn" id="intakeClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="intake-body">
+            <section class="intake-item" id="inAreas">
+                <h3><span class="intake-n">1</span> Change areas <small>each marked New or Existing-revamped</small><b class="intake-flag">Needed</b></h3>
+                <div id="intakeAreas"></div>
+                <button type="button" class="link-btn" id="intakeAddArea">+ Add change area</button>
+            </section>
+            <section class="intake-item" id="inSurfaces">
+                <h3><span class="intake-n">2</span> Surfaces affected<b class="intake-flag">Needed</b></h3>
+                <div class="chip-toggles" id="intakeSurfaces"></div>
+            </section>
+            <section class="intake-item" id="inDesign">
+                <h3><span class="intake-n">3</span> Design material<b class="intake-flag">Needed</b></h3>
+                <p class="hint" id="intakeDesignFound"></p>
+                <label class="field"><span>Design link <small>Figma, Zeplin or a shared folder — optional</small></span>
+                    <input type="url" id="intakeDesignLink" placeholder="https://"></label>
+                <label class="check" id="intakeDesignNoneRow"><input type="checkbox" id="intakeDesignNone"> There is no design material — mark visual details "To confirm:"</label>
+            </section>
+            <section class="intake-item" id="inScope">
+                <h3><span class="intake-n">4</span> Scope<b class="intake-flag">Needed</b></h3>
+                <div class="scope-cards" id="intakeScope" role="radiogroup" aria-label="Scope">
+                    <label class="scope-card"><input type="radio" name="intakeScope" value="changed"><strong>Changed areas only</strong><small>All layers for what changed: functional, UI, API, DB, INT, RPT, REG, EDG. IDs with CR.</small></label>
+                    <label class="scope-card"><input type="radio" name="intakeScope" value="ui"><strong>UI-only revamp</strong><small>12 to 18 high-value cases. No API, DB or INT. IDs with CR.</small></label>
+                    <label class="scope-card"><input type="radio" name="intakeScope" value="full"><strong>Full module</strong><small>The whole module, all layers. IDs without CR.</small></label>
+                </div>
+            </section>
+            <section class="intake-item" id="inPrefix">
+                <h3><span class="intake-n">5</span> Suite prefix<b class="intake-flag">Needed</b></h3>
+                <div class="prefix-row">
+                    <input id="intakePrefix" class="mono" maxlength="6" placeholder="e.g. SCW" aria-label="Suite prefix" autocomplete="off">
+                    <code id="intakeIdPreview">PREFIX_MOD_001</code>
+                </div>
+                <p class="hint">The official product or module acronym (e.g. MPMS, CIO, SCW, UPS) — never taken from a file name.</p>
+            </section>
+        </div>
+        <footer>
+            <span class="intake-missing" id="intakeMissing" role="status"></span>
+            <span class="spacer"></span>
+            <button class="btn btn-ghost btn-sm" id="intakeCancel">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="intakeConfirm">Confirm &amp; generate</button>
+        </footer>
+    </dialog>
+
+    <!-- Smart: review suggested changes before anything is applied -->
+    <dialog class="dialog review-dialog" id="smartReviewDialog" aria-labelledby="smartReviewTitle">
+        <header>
+            <div>
+                <h2 id="smartReviewTitle">Review suggested changes</h2>
+                <p><b id="smartReviewCommand"></b> <span id="smartReviewSummary"></span></p>
+            </div>
+            <button class="icon-btn" id="smartReviewClose" aria-label="Close without applying">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="review-body" id="smartReviewList"></div>
+        <footer>
+            <button class="btn btn-ghost btn-sm" id="smartSelectAll">Select all / none</button>
+            <span class="spacer"></span>
+            <button class="btn btn-sm" id="smartReject">Reject changes</button>
+            <button class="btn btn-primary btn-sm" id="smartApply">Apply selected</button>
+        </footer>
+    </dialog>
+
+    <!-- Smart change history -->
+    <dialog class="dialog hist-dialog" id="smartHistoryDialog" aria-labelledby="smartHistoryTitle">
+        <header>
+            <div>
+                <h2 id="smartHistoryTitle">Smart change history</h2>
+                <p>Every Smart request, what was applied or rejected, and the check result after.</p>
+            </div>
+            <button class="icon-btn" id="smartHistoryClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+        </header>
+        <div class="hist-list" id="smartHistoryList"></div>
+    </dialog>
+
+    <input type="file" id="fileInput" accept=".xlsx,.json" hidden>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="generator.js"></script>
+    <script src="kit.js"></script>
+    <script src="checks.js"></script>
+    <script src="samples.js"></script>
+    <script src="xlsx.js"></script>
+    <script src="importer.js"></script>
+    <script src="sources.js"></script>
+    <script src="video.js"></script>
+    <script src="workbook.js"></script>
+    <script src="history.js"></script>
+    <script src="extract.js"></script>
+    <script src="rules.js"></script>
+    <script src="ai-settings.js"></script>
+    <script src="ai-service.js"></script>
+    <script src="ai-response-validator.js"></script>
+    <script src="ai-change-review.js"></script>
+    <script src="ai-command-controller.js"></script>
+    <script src="chat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

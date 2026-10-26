@@ -1,0 +1,15 @@
+# Dependencies and local tooling
+node_modules/
+.netlify/
+
+# Secrets — the provider key lives only in Netlify environment variables
+.env
+.env.*
+*.pem
+*.key
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
